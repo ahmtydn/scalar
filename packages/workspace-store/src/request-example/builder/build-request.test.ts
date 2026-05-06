@@ -357,6 +357,173 @@ describe('buildRequest', () => {
     expect((requestInit.headers as Headers).get('X-Scalar-Cookie')).toContain('c=1')
   })
 
+  it('rewrites the Date header as X-Scalar-Date when the proxy is used', () => {
+    const headers = new Headers()
+    headers.set('Date', 'Wed, 21 Oct 2015 07:28:00 GMT')
+
+    const { requestPayload, isUsingProxy } = buildRequest(
+      createFactory({
+        proxyUrl: 'https://proxy.scalar.com',
+        baseUrl: 'https://api.example.com',
+        path: { raw: '/', variables: {} },
+        headers,
+      }),
+      { envVariables: {} },
+    )
+    const [, requestInit] = requestPayload
+
+    expect(isUsingProxy).toBe(true)
+    expect((requestInit.headers as Headers).get('X-Scalar-Date')).toBe('Wed, 21 Oct 2015 07:28:00 GMT')
+    expect((requestInit.headers as Headers).get('Date')).toBe(null)
+  })
+
+  it('rewrites the DNT and Referer headers as X-Scalar-* when the proxy is used', () => {
+    const headers = new Headers()
+    headers.set('DNT', '1')
+    headers.set('Referer', 'https://app.scalar.com/request')
+
+    const { requestPayload, isUsingProxy } = buildRequest(
+      createFactory({
+        proxyUrl: 'https://proxy.scalar.com',
+        baseUrl: 'https://api.example.com',
+        path: { raw: '/', variables: {} },
+        headers,
+      }),
+      { envVariables: {} },
+    )
+    const [, requestInit] = requestPayload
+
+    expect(isUsingProxy).toBe(true)
+    expect((requestInit.headers as Headers).get('X-Scalar-DNT')).toBe('1')
+    expect((requestInit.headers as Headers).get('X-Scalar-Referer')).toBe('https://app.scalar.com/request')
+    expect((requestInit.headers as Headers).get('DNT')).toBe(null)
+    expect((requestInit.headers as Headers).get('Referer')).toBe(null)
+  })
+
+  it('rewrites the Date header as X-Scalar-Date when options.isElectron is true', () => {
+    const headers = new Headers()
+    headers.set('Date', 'Wed, 21 Oct 2015 07:28:00 GMT')
+
+    const [, requestInit] = buildRequest(
+      createFactory({
+        options: { isElectron: true },
+        baseUrl: 'https://api.example.com',
+        path: { raw: '/', variables: {} },
+        headers,
+      }),
+      { envVariables: {} },
+    ).requestPayload
+
+    expect((requestInit.headers as Headers).get('X-Scalar-Date')).toBe('Wed, 21 Oct 2015 07:28:00 GMT')
+    expect((requestInit.headers as Headers).get('Date')).toBe(null)
+  })
+
+  it('rewrites the DNT and Referer headers as X-Scalar-* when options.isElectron is true', () => {
+    const headers = new Headers()
+    headers.set('DNT', '1')
+    headers.set('Referer', 'https://app.scalar.com/request')
+
+    const [, requestInit] = buildRequest(
+      createFactory({
+        options: { isElectron: true },
+        baseUrl: 'https://api.example.com',
+        path: { raw: '/', variables: {} },
+        headers,
+      }),
+      { envVariables: {} },
+    ).requestPayload
+
+    expect((requestInit.headers as Headers).get('X-Scalar-DNT')).toBe('1')
+    expect((requestInit.headers as Headers).get('X-Scalar-Referer')).toBe('https://app.scalar.com/request')
+    expect((requestInit.headers as Headers).get('DNT')).toBe(null)
+    expect((requestInit.headers as Headers).get('Referer')).toBe(null)
+  })
+
+  it('keeps the Date header untouched when the proxy is not used', () => {
+    const headers = new Headers()
+    headers.set('Date', 'Wed, 21 Oct 2015 07:28:00 GMT')
+
+    const [, requestInit] = buildRequest(
+      createFactory({
+        baseUrl: 'https://api.example.com',
+        path: { raw: '/', variables: {} },
+        headers,
+      }),
+      { envVariables: {} },
+    ).requestPayload
+
+    expect((requestInit.headers as Headers).get('Date')).toBe('Wed, 21 Oct 2015 07:28:00 GMT')
+    expect((requestInit.headers as Headers).get('X-Scalar-Date')).toBe(null)
+  })
+
+  it('rewrites the User-Agent header as X-Scalar-User-Agent when the proxy is used', () => {
+    const headers = new Headers()
+    headers.set('User-Agent', 'ScalarTest/1.0')
+
+    const { requestPayload, isUsingProxy } = buildRequest(
+      createFactory({
+        proxyUrl: 'https://proxy.scalar.com',
+        baseUrl: 'https://api.example.com',
+        path: { raw: '/', variables: {} },
+        headers,
+      }),
+      { envVariables: {} },
+    )
+    const [, requestInit] = requestPayload
+
+    expect(isUsingProxy).toBe(true)
+    expect((requestInit.headers as Headers).get('X-Scalar-User-Agent')).toBe('ScalarTest/1.0')
+    expect((requestInit.headers as Headers).get('User-Agent')).toBe(null)
+  })
+
+  it('rewrites the User-Agent header as X-Scalar-User-Agent when options.isElectron is true', () => {
+    const headers = new Headers()
+    headers.set('User-Agent', 'ScalarTest/1.0')
+
+    const [, requestInit] = buildRequest(
+      createFactory({
+        options: { isElectron: true },
+        baseUrl: 'https://api.example.com',
+        path: { raw: '/', variables: {} },
+        headers,
+      }),
+      { envVariables: {} },
+    ).requestPayload
+
+    expect((requestInit.headers as Headers).get('X-Scalar-User-Agent')).toBe('ScalarTest/1.0')
+    expect((requestInit.headers as Headers).get('User-Agent')).toBe(null)
+  })
+
+  it('does not set X-Scalar-User-Agent in Electron when User-Agent is absent', () => {
+    const [, requestInit] = buildRequest(
+      createFactory({
+        options: { isElectron: true },
+        baseUrl: 'https://api.example.com',
+        path: { raw: '/', variables: {} },
+      }),
+      { envVariables: {} },
+    ).requestPayload
+
+    expect((requestInit.headers as Headers).get('X-Scalar-User-Agent')).toBe(null)
+  })
+
+  it('keeps the User-Agent header untouched when neither proxy nor Electron is used', () => {
+    const headers = new Headers()
+    headers.set('User-Agent', 'ScalarTest/1.0')
+
+    const [, requestInit] = buildRequest(
+      createFactory({
+        baseUrl: 'https://api.example.com',
+        path: { raw: '/', variables: {} },
+        headers,
+      }),
+      { envVariables: {} },
+    ).requestPayload
+
+    expect((requestInit.headers as Headers).get('X-Scalar-User-Agent')).toBe(null)
+    expect((requestInit.headers as Headers).get('User-Agent')).toBe('ScalarTest/1.0')
+  })
+
   it('rewrites the request URL through the proxy when shouldUseProxy is true', () => {
     const { requestPayload, isUsingProxy } = buildRequest(
       createFactory({

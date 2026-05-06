@@ -1,3 +1,4 @@
+import { X_SCALAR_DATE, X_SCALAR_DNT, X_SCALAR_REFERER, X_SCALAR_USER_AGENT } from '@scalar/helpers/http/scalar-headers'
 import { replaceEnvVariables } from '@scalar/helpers/regex/replace-variables'
 import { redirectToProxy, shouldUseProxy } from '@scalar/helpers/url/redirect-to-proxy'
 import { encode as encodeBase64 } from 'js-base64'
@@ -13,6 +14,18 @@ import type { XScalarCookie } from '@/schemas/extensions/general/x-scalar-cookie
  * The payload to build a request, useful when bypassing limitations of the browser Request object
  */
 export type RequestPayload = [string, RequestInit]
+
+type ForbiddenHeaderRewrite = {
+  header: string
+  scalarHeader: string
+}
+
+const FORBIDDEN_HEADERS: ForbiddenHeaderRewrite[] = [
+  { header: 'date', scalarHeader: X_SCALAR_DATE },
+  { header: 'dnt', scalarHeader: X_SCALAR_DNT },
+  { header: 'referer', scalarHeader: X_SCALAR_REFERER },
+  { header: 'user-agent', scalarHeader: X_SCALAR_USER_AGENT },
+]
 
 /**
  * Built request response
@@ -164,6 +177,21 @@ export const buildRequest = (
   /** Add the cookie header to the headers */
   if (cookieHeader) {
     headers.set(cookieHeader.name, cookieHeader.value)
+  }
+
+  /**
+   * Browsers strip some forbidden headers from outgoing requests.
+   * For a small, explicit allowlist we mirror those values to `X-Scalar-*`
+   * so proxy/Electron can apply them server-side.
+   */
+  if (isUsingProxy || request.options?.isElectron) {
+    FORBIDDEN_HEADERS.forEach(({ header, scalarHeader }) => {
+      const headerValue = headers.get(header)
+      if (headerValue) {
+        headers.set(scalarHeader, headerValue)
+        headers.delete(header)
+      }
+    })
   }
 
   /** Encode the URL with the allowed reserved query parameters */
