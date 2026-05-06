@@ -306,7 +306,7 @@ export type UIEvents = {
       }
     | {
         page: 'operation'
-        path: 'overview' | 'servers' | 'authentication'
+        path: 'overview' | 'servers' | 'authentication' | 'editor'
         operationPath: string
         method: HttpMethod
         documentSlug?: string
