@@ -1,5 +1,5 @@
 import { PETSTORE_URL_2_0, PETSTORE_URL_3_0, PETSTORE_URL_3_1 } from '@scalar/helpers/url/oas-document-fixtures'
-import { apiReferenceConfigurationWithSourceSchema } from '@scalar/types/api-reference'
+import { apiReferenceConfigurationWithSourceSchema } from '@scalar/schemas/api-reference'
 import { renderToString } from '@vue/server-renderer'
 import { expect, it, vi } from 'vitest'
 import { createSSRApp, h } from 'vue'
@@ -79,7 +79,7 @@ it.each(EXAMPLE_API_DEFINITIONS)('$title ($url)', { timeout: 40000 }, async ({ t
   const app = createSSRApp({
     render: () =>
       h(ApiReference, {
-        configuration: apiReferenceConfigurationWithSourceSchema.parse({
+        configuration: apiReferenceConfigurationWithSourceSchema({
           url: `https://fixtures.staging.scalar.com/layout-reference/${name}`,
         }),
       }),

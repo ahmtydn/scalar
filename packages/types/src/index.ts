@@ -4,7 +4,6 @@
 export type {
   AnyApiReferenceConfiguration,
   ApiClientConfiguration,
-  ApiClientPlugin,
   ApiReferenceConfiguration,
   ApiReferenceConfigurationRaw,
   ApiReferenceConfigurationWithMultipleSources,
@@ -12,21 +11,19 @@ export type {
   ApiReferenceInstance,
   ApiReferencePlugin,
   AuthenticationConfiguration,
+  BaseConfiguration,
   CreateApiReference,
   ExternalUrls,
   HtmlRenderingConfiguration,
+  LifecycleHooks,
+  SecurityScheme,
+  SecuritySchemeApiKey,
+  SecuritySchemeHttp,
+  SecuritySchemeOauth2,
+  SecuritySchemeOpenIdConnect,
   SourceConfiguration,
   SpecificationExtension,
   ViewComponent,
-} from './api-reference/index'
-export {
-  apiClientConfigurationSchema,
-  apiClientPluginSchema,
-  apiReferenceConfigurationSchema,
-  apiReferenceConfigurationWithSourceSchema,
-  hooksSchema,
-  htmlRenderingConfigurationSchema,
-  isConfigurationWithSources,
-  sourceConfigurationSchema,
-} from './api-reference/index'
+} from './api-reference'
+export { isConfigurationWithSources } from './api-reference'
 export { XScalarStability } from './legacy/index'

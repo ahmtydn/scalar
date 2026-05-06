@@ -1,9 +1,9 @@
+import { literal, union, validate } from '@scalar/validation'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { z } from 'zod'
 
 const colorMode = ref<ColorMode>('dark')
 
-const colorModeSchema = z.enum(['dark', 'light', 'system']).optional().catch(undefined)
+const colorModeSchema = union([literal('system'), literal('dark'), literal('light')])
 
 /** Possible color modes */
 type ColorMode = 'light' | 'dark' | 'system'
@@ -86,10 +86,12 @@ export function useColorMode(
     }
   }
 
-  // Priority of initial values is: forceDarkModeState -> LocalStorage -> App Config -> initial / Fallback
-  const savedColorMode = colorModeSchema.parse(
-    typeof window !== 'undefined' ? window?.localStorage?.getItem('colorMode') : 'system',
-  )
+  // Priority: overrideColorMode -> localStorage -> initialColorMode
+  // Without `window` (SSR/SSG), there is no storage — treat preference as `system` so we do not
+  // fall through to `initialColorMode` and diverge from client hydration (see useColorMode tests).
+  const storedValue = typeof window === 'undefined' ? 'system' : window?.localStorage?.getItem('colorMode')
+  const savedColorMode = validate(colorModeSchema, storedValue) ? (storedValue as ColorMode) : null
+
   colorMode.value = overrideColorMode ?? savedColorMode ?? initialColorMode
 
   // Watch for colorMode changes and update the body class
