@@ -37,8 +37,10 @@ export type { MergedSecuritySchemes } from './context'
 export {
   type BuildRequestExampleContext,
   combineParams,
+  filterDisabledDefaultHeaders,
   getActiveEnvironment,
   getActiveProxyUrl,
+  getDefaultHeaders,
   getRequestExampleContext,
   getSecurityRequirements,
   getSecuritySchemes,
@@ -47,6 +49,8 @@ export {
   getServers,
   isAuthOptional,
   mergeSecurity,
+  restoreConventionalDefaultHeaderNames,
+  restoreConventionalHeaderName,
 } from './context'
 export {
   CONTEXT_FUNCTION_NAMES,
