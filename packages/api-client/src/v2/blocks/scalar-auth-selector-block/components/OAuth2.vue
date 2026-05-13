@@ -75,12 +75,14 @@ const {
 }>()
 
 const emits = defineEmits<{
+  (e: 'update:selectedScopes', payload: { scopes: string[] }): void
   (
-    e: 'update:selectedScopes',
-    payload: Pick<
-      ApiReferenceEvents['auth:update:selected-scopes'],
-      'scopes' | 'newScopePayload'
-    >,
+    e: 'upsert:scope',
+    payload: Omit<ApiReferenceEvents['auth:upsert:scopes'], 'name'>,
+  ): void
+  (
+    e: 'delete:scope',
+    payload: Omit<ApiReferenceEvents['auth:delete:scopes'], 'name'>,
   ): void
 }>()
 
@@ -94,10 +96,16 @@ type NonImplicitFlow =
   | OAuthFlowClientCredentialsSecret
   | OAuthFlowAuthorizationCodeSecret
 
-/** We filter selected scopes to only include scopes that are in this flow*/
-const selectedScopes = computed(() =>
-  selectedScopesProp.filter((scope) => scope in (flow.value.scopes ?? {})),
-)
+/** We filter selected scopes to only include scopes that are defined on this flow (own keys only). */
+const selectedScopes = computed(() => {
+  const definedScopes = flow.value.scopes
+  if (!definedScopes) {
+    return []
+  }
+  return selectedScopesProp.filter((scope) =>
+    Object.hasOwn(definedScopes, scope),
+  )
+})
 
 /**
  * PKCE public clients do not use a client_secret. Hide the field when the
@@ -517,7 +525,9 @@ const handleSecretLocationUpdate = (value: string): void => {
         :flow
         :flowType="type"
         :selectedScopes
-        @update:selectedScopes="(v) => emits('update:selectedScopes', v)" />
+        @update:selectedScopes="(v) => emits('update:selectedScopes', v)"
+        @upsert:scope="(v) => emits('upsert:scope', v)"
+        @delete:scope="(v) => emits('delete:scope', v)" />
     </DataTableRow>
 
     <DataTableRow class="min-w-full">
