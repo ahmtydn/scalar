@@ -5,7 +5,7 @@ import type { HttpMethod } from '@scalar/helpers/http/http-methods'
 import { slugify } from '@scalar/helpers/string/slugify'
 import type { LoaderPlugin } from '@scalar/json-magic/bundle'
 import { migrateLocalStorageToIndexDb } from '@scalar/oas-utils/migrations'
-import { createSidebarState, generateReverseIndex } from '@scalar/sidebar'
+import { createSidebarState, generateReverseIndex, getChildEntry } from '@scalar/sidebar'
 import { type WorkspaceStore, createWorkspaceStore } from '@scalar/workspace-store/client'
 import {
   type OperationExampleMeta,
@@ -1018,17 +1018,25 @@ export const createAppState = async ({
       return router.push(route)
     }
 
-    // Navigate to the document overview page
+    // Selecting a document expands it and jumps to its first operation,
+    // falling back to the overview only when there are no operations.
     if (entry.type === 'document') {
-      // If we are already in the document, just toggle expansion
-      if (sidebarState.selectedItem.value === id) {
+      // Toggle expansion when the document or any descendant is already selected.
+      // Strict equality on `selectedItem` would miss this, since clicking a
+      // document recurses into a leaf (operation/example).
+      if (sidebarState.isSelected(id)) {
         sidebarState.setExpanded(id, !sidebarState.isExpanded(id))
         return
       }
 
-      // Otherwise, select it
-      sidebarState.setSelected(id)
       sidebarState.setExpanded(id, true)
+
+      const firstOperation = getChildEntry('operation', entry)
+      if (firstOperation) {
+        return handleSelectItem(firstOperation.id)
+      }
+
+      sidebarState.setSelected(id)
       return navigate({
         name: 'document.overview',
         params: { documentSlug: entry.name },
