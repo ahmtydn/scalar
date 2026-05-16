@@ -41,6 +41,7 @@ import { useDocumentWatcher } from '@/features/app/hooks/use-document-watcher'
 import type { CommandPaletteState } from '@/features/command-palette/hooks/use-command-palette-state'
 import TheCommandPalette from '@/features/command-palette/TheCommandPalette.vue'
 import { useMonacoEditorConfiguration } from '@/features/editor'
+import { useAuth } from '@/hooks/use-auth'
 import { useColorMode } from '@/hooks/use-color-mode'
 import { useTeams } from '@/hooks/use-teams'
 import { useThemes } from '@/hooks/use-themes'
@@ -138,6 +139,21 @@ watch(app.telemetry, () => {
     plugin.lifecycle?.onConfigChange?.({
       config: { telemetry: app.telemetry.value },
     })
+  }
+})
+
+const { tokenData } = useAuth()
+
+/** Notify logging in/out */
+watch(tokenData, async (newTokenData, oldTokenData) => {
+  if (newTokenData && !oldTokenData) {
+    app.eventBus.emit('log:user-login', {
+      uid: newTokenData.userUid,
+      email: newTokenData.email,
+      teamUid: newTokenData.teamUid,
+    })
+  } else if (!newTokenData && oldTokenData) {
+    app.eventBus.emit('log:user-logout')
   }
 })
 
