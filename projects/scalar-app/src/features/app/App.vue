@@ -43,7 +43,6 @@ import TheCommandPalette from '@/features/command-palette/TheCommandPalette.vue'
 import { useMonacoEditorConfiguration } from '@/features/editor'
 import { useAuth } from '@/hooks/use-auth'
 import { useColorMode } from '@/hooks/use-color-mode'
-import { useTeams } from '@/hooks/use-teams'
 import { useThemes } from '@/hooks/use-themes'
 import type {
   RegistryAdapter,
@@ -115,8 +114,6 @@ defineSlots<{
 
 const app = getAppState()
 const paletteState = getCommandPaletteState()
-
-const { currentTeam } = useTeams()
 
 /** Expose workspace store to window for debugging purposes. */
 if (typeof window !== 'undefined') {
@@ -328,7 +325,6 @@ const routerViewProps = computed<RouteProps>(() => {
           :eventBus="app.eventBus"
           :tabs="app.tabs.state.value" />
         <AppHeader
-          :menuTitle="currentTeam?.name"
           @changed:team="emit('changed:team')"
           @navigate:to:settings="
             app.eventBus.emit('ui:navigate', {
